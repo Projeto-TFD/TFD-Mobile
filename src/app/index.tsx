@@ -1,98 +1,74 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { View, Text, Pressable, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import { Input } from '@/components/ui/Input';
+import { maskCPF, isValidCPF } from '@/utils/cpf';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function LoginScreen() {
+  const [cpf, setCpf] = useState('');
+  const [senha, setSenha] = useState('');
+  const [errors, setErrors] = useState<{ cpf?: string; senha?: string }>({});
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+  function handleCpfChange(value: string) {
+    setCpf(maskCPF(value));
+    if (errors.cpf) setErrors((prev) => ({ ...prev, cpf: undefined }));
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
+
+  function handleSubmit() {
+    const newErrors: typeof errors = {};
+
+    if (!isValidCPF(cpf)) newErrors.cpf = 'CPF inválido';
+    if (senha.length < 6) newErrors.senha = 'A senha deve ter pelo menos 6 caracteres';
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    console.log('login', { cpf, senha });
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <KeyboardAvoidingView
+      className="flex-1 bg-white"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="flex-grow">
+
+
+        <View className="bg-primary w-full items-center justify-center">
+          <Image
+            source={require('@/assets/images/tfd.png')}
+            className="w-40 h-40"
+            resizeMode="contain"
+          />
+        </View>
+
+        <View className="flex-1 justify-center p-6">
+          <Input
+            label="CPF"
+            placeholder="000.000.000-00"
+            keyboardType="numeric"
+            value={cpf}
+            onChangeText={handleCpfChange}
+            maxLength={14}
+            error={errors.cpf}
+          />
+
+          <Input
+            label="Senha"
+            placeholder="Sua senha"
+            isPassword
+            value={senha}
+            onChangeText={setSenha}
+            error={errors.senha}
+          />
+
+          <Pressable
+            className="bg-primary h-[52px] rounded-xl items-center justify-center mt-2"
+            onPress={handleSubmit}
+          >
+            <Text className="text-white text-base font-semibold">Entrar</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
