@@ -3,6 +3,7 @@ import { View, Text, Pressable, KeyboardAvoidingView, Platform, ScrollView, Imag
 import { Input } from '@/components/ui/Input';
 import { maskCPF, isValidCPF } from '@/utils/cpf';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const [cpf, setCpf] = useState('');
@@ -35,13 +36,15 @@ export default function LoginScreen() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="flex-grow">
 
 
-        <View className="bg-primary w-full items-center justify-center">
-          <Image
-            source={require('@/assets/images/tfd.png')}
-            className="w-40 h-40"
-            resizeMode="contain"
-          />
-        </View>
+        <SafeAreaView edges={['top']} className="bg-primary">
+          <View className="h-[150px] items-center justify-center">
+            <Image
+              source={require('@/assets/images/tfd.png')}
+              className="w-28 h-28"
+              resizeMode="contain"
+            />
+          </View>
+        </SafeAreaView>
 
         <View className="flex-1 justify-center p-6">
           <Input
