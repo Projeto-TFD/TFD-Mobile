@@ -39,8 +39,8 @@ export default function LoginScreen() {
         <SafeAreaView edges={['top']} className="bg-primary">
           <View className="h-[150px] items-center justify-center">
             <Image
-              source={require('@/assets/images/tfd.png')}
-              className="w-28 h-28"
+              source={require('@/assets/images/logo.png')}
+              className="w-60 h-60"
               resizeMode="contain"
             />
           </View>
@@ -72,6 +72,9 @@ export default function LoginScreen() {
           >
             <Text className="text-white text-base font-semibold">Entrar</Text>
           </Pressable>
+          <Text className="text-center text-xs text-slate-400 mt-8">
+            Desenvolvido por estudantes do IFPB — Campus Cajazeiras
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
