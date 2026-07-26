@@ -3,11 +3,13 @@ import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Accordion } from '@/components/ui/Accordion';
 import { Select } from '@/components/ui/Select';
-import { vehicles } from '@/mocks/vehicles';
+import { useVeiculos } from '@/hooks/useVeiculos';
 import { patients } from '@/mocks/patients';
 import { router } from 'expo-router';
 import { useTripStore } from '@/store/tripStore';
 import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator } from 'react-native';
+import { useMe } from '@/hooks/useMe';
 
 type Passageiro = {
   id: string;
@@ -18,6 +20,7 @@ type Passageiro = {
 };
 
 export default function CadastrarViagemScreen() {
+  const { data: me } = useMe();
   const [cidadeDestino, setCidadeDestino] = useState('');
   const [uf, setUf] = useState('');
   const [observacao, setObservacao] = useState('');
@@ -30,9 +33,11 @@ export default function CadastrarViagemScreen() {
 
   const startTrip = useTripStore((state) => state.startTrip);
 
-  const veiculoOptions = vehicles.map((v) => ({
-    value: v.id,
-    label: `${v.modelo} ${v.placa} ${v.ano} ${v.renavam} ${v.tipo}`,
+  const { data: veiculos, isLoading: isLoadingVeiculos, isError: isErrorVeiculos } = useVeiculos();
+
+  const veiculoOptions = (veiculos ?? []).map((v) => ({
+    value: String(v.id),
+    label: `${v.nome} · ${v.placa} · ${v.ano} · ${v.renavam}`,
   }));
 
   const pacienteOptions = patients.map((p) => ({ value: p.id, label: p.nome }));
@@ -79,7 +84,7 @@ export default function CadastrarViagemScreen() {
         <SafeAreaView edges={['top']} className="bg-primary">
           <View className="px-6 h-[140px] flex-row items-center justify-between">
             <View>
-              <Text className="text-white text-lg font-bold">Olá, João!</Text>
+              <Text className="text-white text-lg font-bold">Olá, {me?.nome ?? '...'}!</Text>
               <Text className="text-white/80 text-sm mt-1">Cadastre sua viagem aqui</Text>
             </View>
 
@@ -123,12 +128,18 @@ export default function CadastrarViagemScreen() {
         </Accordion>
 
         <Accordion title="Selecionar veículo">
-          <Select
-            label="Escolha o veículo"
-            options={veiculoOptions}
-            value={veiculoId}
-            onChange={setVeiculoId}
-          />
+          {isLoadingVeiculos ? (
+          <ActivityIndicator color="#1E5F8C" />
+          ) : isErrorVeiculos ? (
+          <Text className="text-danger text-sm">Não foi possível carregar os veículos.</Text>
+          ) : (
+            <Select
+              label="Escolha o veículo"
+              options={veiculoOptions}
+              value={veiculoId}
+              onChange={setVeiculoId}
+            />
+          )}
         </Accordion>
 
         <Accordion title="Adicionar passageiros">
@@ -140,7 +151,7 @@ export default function CadastrarViagemScreen() {
             onChange={setPacienteId}
           />
           <Select
-            label="Possui acompanhante?"
+            label="Acompanhante(opcional)"
             placeholder="Selecione o acompanhante"
             options={pacienteOptions.filter((o) => o.value !== pacienteId)}
             value={acompanhanteId}
