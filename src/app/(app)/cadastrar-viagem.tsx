@@ -5,6 +5,9 @@ import { Accordion } from '@/components/ui/Accordion';
 import { Select } from '@/components/ui/Select';
 import { vehicles } from '@/mocks/vehicles';
 import { patients } from '@/mocks/patients';
+import { router } from 'expo-router';
+import { useTripStore } from '@/store/tripStore';
+import { Ionicons } from '@expo/vector-icons';
 
 type Passageiro = {
   id: string;
@@ -24,6 +27,8 @@ export default function CadastrarViagemScreen() {
   const [pacienteId, setPacienteId] = useState<string>();
   const [acompanhanteId, setAcompanhanteId] = useState<string>();
   const [passageiros, setPassageiros] = useState<Passageiro[]>([]);
+
+  const startTrip = useTripStore((state) => state.startTrip);
 
   const veiculoOptions = vehicles.map((v) => ({
     value: v.id,
@@ -60,16 +65,28 @@ export default function CadastrarViagemScreen() {
 
   function handleIniciarViagem() {
     // TODO: integrar com API quando o back estiver pronto
+    startTrip({ cidadeDestino, uf, observacao, veiculoId, passageiros });
+    router.replace('/(app)/viagem-em-andamento');
     console.log({ cidadeDestino, uf, observacao, veiculoId, passageiros });
+  }
+
+  function handleLogout() {
+    router.replace('/(auth)/login');
   }
 
   return (
     <View className="flex-1 bg-white">
         <SafeAreaView edges={['top']} className="bg-primary">
-            <View className="px-6 h-[120px] justify-center">
-                <Text className="text-white text-lg font-bold">Olá, João!</Text>
-                <Text className="text-white/80 text-sm mt-1">Cadastre sua viagem aqui</Text>
+          <View className="px-6 h-[140px] flex-row items-center justify-between">
+            <View>
+              <Text className="text-white text-lg font-bold">Olá, João!</Text>
+              <Text className="text-white/80 text-sm mt-1">Cadastre sua viagem aqui</Text>
             </View>
+
+            <Pressable onPress={handleLogout} hitSlop={12}>
+              <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+            </Pressable>
+          </View>
         </SafeAreaView>
 
       <ScrollView className="flex-1 px-4 pt-4" contentContainerClassName="pb-4">
@@ -156,7 +173,7 @@ export default function CadastrarViagemScreen() {
             className="bg-primary h-[44px] rounded-xl items-center justify-center"
             onPress={handleAdicionarPassageiro}
           >
-            <Text className="text-white text-sm font-semibold">Adicionar outro paciente</Text>
+            <Text className="text-white text-sm font-semibold">Adicionar paciente</Text>
           </Pressable>
         </Accordion>
       </ScrollView>
