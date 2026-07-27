@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Accordion } from '@/components/ui/Accordion';
 import { Select } from '@/components/ui/Select';
 import { useVeiculos } from '@/hooks/useVeiculos';
-import { patients } from '@/mocks/patients';
+import { usePessoas } from '@/hooks/usePessoas';
 import { router } from 'expo-router';
 import { useTripStore } from '@/store/tripStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ type Passageiro = {
 };
 
 export default function CadastrarViagemScreen() {
+  const { data: pessoas, isLoading: isLoadingPessoas, isError: isErrorPessoas } = usePessoas();
   const { data: me } = useMe();
   const [cidadeDestino, setCidadeDestino] = useState('');
   const [uf, setUf] = useState('');
@@ -40,22 +41,32 @@ export default function CadastrarViagemScreen() {
     label: `${v.nome} · ${v.placa} · ${v.ano} · ${v.renavam}`,
   }));
 
-  const pacienteOptions = patients.map((p) => ({ value: p.id, label: p.nome }));
+
+  const idsJaUsados = passageiros.flatMap((p) =>
+    [p.pacienteId, p.acompanhanteId].filter(Boolean)
+  );
+  const todasPessoas = (pessoas ?? []).map((p) => ({ value: String(p.id), label: p.nome }));
+  const pacienteOptions = todasPessoas.filter(
+    (o) => !idsJaUsados.includes(o.value) && o.value !== acompanhanteId
+  );
+  const acompanhanteOptions = todasPessoas.filter(
+    (o) => !idsJaUsados.includes(o.value) && o.value !== pacienteId
+  );
 
   function handleAdicionarPassageiro() {
     if (!pacienteId) return;
 
-    const paciente = patients.find((p) => p.id === pacienteId);
-    const acompanhante = patients.find((p) => p.id === acompanhanteId);
+    const paciente = pessoas?.find((p) => String(p.id) === pacienteId);
+    const acompanhante = pessoas?.find((p) => String(p.id) === acompanhanteId);
     if (!paciente) return;
 
     setPassageiros((prev) => [
       ...prev,
       {
         id: `${Date.now()}`,
-        pacienteId: paciente.id,
+        pacienteId: paciente.id.toString(),
         pacienteNome: paciente.nome,
-        acompanhanteId: acompanhante?.id,
+        acompanhanteId: acompanhante?.id.toString(),
         acompanhanteNome: acompanhante?.nome,
       },
     ]);
@@ -141,51 +152,58 @@ export default function CadastrarViagemScreen() {
             />
           )}
         </Accordion>
-
         <Accordion title="Adicionar passageiros">
-          <Select
-            label="Paciente"
-            placeholder="Selecione o paciente"
-            options={pacienteOptions}
-            value={pacienteId}
-            onChange={setPacienteId}
-          />
-          <Select
-            label="Acompanhante(opcional)"
-            placeholder="Selecione o acompanhante"
-            options={pacienteOptions.filter((o) => o.value !== pacienteId)}
-            value={acompanhanteId}
-            onChange={setAcompanhanteId}
-          />
+          {isLoadingPessoas ? (
+            <ActivityIndicator color="#1E5F8C" />
+          ) : isErrorPessoas ? (
+            <Text className="text-danger text-sm">Não foi possível carregar os pacientes.</Text>
+          ) : (
+            <>
+              <Select
+                label="Paciente"
+                placeholder="Selecione o paciente"
+                options={pacienteOptions}
+                value={pacienteId}
+                onChange={setPacienteId}
+              />
+              <Select
+                label="Acompanhante (opcional)"
+                placeholder="Selecione o acompanhante"
+                options={acompanhanteOptions}
+                value={acompanhanteId}
+                onChange={setAcompanhanteId}
+              />
 
-          {passageiros.length > 0 && (
-            <View className="mb-4">
-              <Text className="text-sm font-semibold text-slate-800 mb-2">
-                Passageiros adicionados
-              </Text>
-              {passageiros.map((p) => (
-                <View
-                  key={p.id}
-                  className="flex-row items-center justify-between border-b border-slate-100 py-2"
-                >
-                  <Text className="text-slate-700 text-sm">
-                    {p.pacienteNome}
-                    {p.acompanhanteNome ? ` + ${p.acompanhanteNome}` : ''}
+              {passageiros.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-sm font-semibold text-slate-800 mb-2">
+                    Passageiros adicionados
                   </Text>
-                  <Pressable onPress={() => handleRemoverPassageiro(p.id)} hitSlop={8}>
-                    <Text className="text-slate-400 text-base">×</Text>
-                  </Pressable>
+                  {passageiros.map((p) => (
+                    <View
+                      key={p.id}
+                      className="flex-row items-center justify-between border-b border-slate-100 py-2"
+                    >
+                      <Text className="text-slate-700 text-sm">
+                        {p.pacienteNome}
+                        {p.acompanhanteNome ? ` + ${p.acompanhanteNome}` : ''}
+                      </Text>
+                      <Pressable onPress={() => handleRemoverPassageiro(p.id)} hitSlop={8}>
+                        <Text className="text-slate-400 text-base">×</Text>
+                      </Pressable>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          )}
+              )}
 
-          <Pressable
-            className="bg-primary h-[44px] rounded-xl items-center justify-center"
-            onPress={handleAdicionarPassageiro}
-          >
-            <Text className="text-white text-sm font-semibold">Adicionar paciente</Text>
-          </Pressable>
+              <Pressable
+                className="bg-primary h-[44px] rounded-xl items-center justify-center"
+                onPress={handleAdicionarPassageiro}
+              >
+                <Text className="text-white text-sm font-semibold">Adicionar paciente</Text>
+              </Pressable>
+            </>
+          )}
         </Accordion>
       </ScrollView>
 
