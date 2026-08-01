@@ -11,8 +11,9 @@ export type Passageiro = {
 };
 
 type TripData = {
+  viagemId: number;
   cidadeDestino: string;
-  uf: string;
+  cidadeDestinoId: number;
   observacao: string;
   veiculoId?: string;
   passageiros: Passageiro[];
