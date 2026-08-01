@@ -1,15 +1,17 @@
-import React, { useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, BackHandler } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, Pressable, ScrollView, BackHandler, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useTripStore } from '@/store/tripStore';
-import { vehicles } from '@/mocks/vehicles';
+import { useVeiculos } from '@/hooks/useVeiculos';
+import { finalizarViagem } from '@/services/viagens';
 
 export default function ViagemEmAndamentoScreen() {
   const trip = useTripStore((state) => state.trip);
   const finishTrip = useTripStore((state) => state.finishTrip);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const { data: veiculos } = useVeiculos();
 
-  // Bloqueia o botão físico/gesto de voltar do Android enquanto a viagem estiver ativa
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
@@ -25,18 +27,33 @@ export default function ViagemEmAndamentoScreen() {
     );
   }
 
-  const veiculo = vehicles.find((v) => v.id === trip.veiculoId);
+  const veiculo = veiculos?.find((v) => String(v.id) === trip.veiculoId);
 
-  function handleFinalizar() {
-    console.log('finalizar clicado');
-    finishTrip();
-    router.replace('/(app)/viagem-finalizada');
+  async function handleFinalizar() {
+    if (!trip) return;
+
+    setIsFinishing(true);
+    const dataEntrada = new Date().toISOString();
+
+    try {
+      await finalizarViagem(trip.viagemId, dataEntrada);
+
+      router.replace({
+        pathname: '/(app)/viagem-finalizada',
+      });
+
+      finishTrip();
+    } catch (error) {
+
+    } finally {
+      setIsFinishing(false);
+    }
   }
 
   return (
     <View className="flex-1 bg-white">
       <SafeAreaView edges={['top']} className="bg-primary">
-        <View className="h-[140px] items-center justify-center">
+        <View className="h-[120px] items-center justify-center">
           <Text className="text-white text-xl font-bold">Viagem iniciada!</Text>
         </View>
       </SafeAreaView>
@@ -46,15 +63,12 @@ export default function ViagemEmAndamentoScreen() {
         <View className="border border-slate-200 rounded-xl p-4 mb-6">
           <View className="flex-row justify-between mb-1">
             <Text className="text-primary text-sm">Cidade</Text>
-            <Text className="text-primary text-sm font-semibold">
-              {trip.cidadeDestino || '-'}
-              {trip.uf ? ` / ${trip.uf}` : ''}
-            </Text>
+            <Text className="text-primary text-sm font-semibold">{trip.cidadeDestino || '-'}</Text>
           </View>
 
           {veiculo && (
             <Text className="text-primary text-sm mt-1">
-              Veículo: {veiculo.modelo} · {veiculo.placa}
+              Veículo: {veiculo.nome} · {veiculo.placa}
             </Text>
           )}
 
@@ -85,8 +99,13 @@ export default function ViagemEmAndamentoScreen() {
         <Pressable
           className="bg-primary h-[52px] rounded-xl items-center justify-center"
           onPress={handleFinalizar}
+          disabled={isFinishing}
         >
-          <Text className="text-white text-base font-semibold">Finalizar viagem</Text>
+          {isFinishing ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text className="text-white text-base font-semibold">Finalizar viagem</Text>
+          )}
         </Pressable>
       </View>
     </View>

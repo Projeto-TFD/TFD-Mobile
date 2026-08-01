@@ -19,6 +19,16 @@ export type Me = {
   nome: string;
   email: string;
   role: 'ADMIN' | 'OPERADOR';
+  ativo: boolean;
+  motorista: {
+    id: number;
+    cpf: string;
+    endereco: string;
+    renach: string;
+    validadeHabilitacao: string;
+    tipoHabilitacao: string;
+    tipoVinculo: string;
+  } | null;
 };
 
 export async function fetchMe(): Promise<Me> {
