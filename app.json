@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "tfd-mobile-tmp",
+    "name": "TFD Mobile",
     "slug": "tfd-mobile-tmp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "",
+    "icon": "./assets/images/icontfd.png",
     "scheme": "tfdmobiletmp",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "br.edu.ifpb.tfdmobile",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icontfd.png",
         "backgroundColor": "#E6F4FE"
       },
       "predictiveBackGestureEnabled": false
@@ -36,6 +38,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "058bccd7-6ae9-4006-a667-219142d4d24a"
+      }
     }
   }
 }
