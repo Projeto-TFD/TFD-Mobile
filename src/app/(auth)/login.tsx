@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
-import {View,Text,Pressable,KeyboardAvoidingView,Platform,ScrollView,Image,ActivityIndicator,} from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Input } from '@/components/ui/Input';
 import { login } from '@/services/auth';
 import { useAuthStore } from '@/store/authStore';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
+import { maskCPF } from '@/utils/cpf';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; senha?: string }>({});
+  const [errors, setErrors] = useState<{ cpf?: string; senha?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  const setToken = useAuthStore((state) => state.setToken);
+  const setSession = useAuthStore((state) => state.setSession);
 
-  function handleEmailChange(value: string) {
-    setEmail(value);
-    if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+  function handleCpfChange(value: string) {
+    setCpf(maskCPF(value));
+    if (errors.cpf) setErrors((prev) => ({ ...prev, cpf: undefined }));
     if (loginError) setLoginError(null);
   }
 
   async function handleSubmit() {
     const newErrors: typeof errors = {};
 
-    if (!isValidEmail(email)) newErrors.email = 'E-mail inválido';
+    if (cpf.trim().length === 0) newErrors.cpf = 'Informe o CPF';
     if (senha.length < 6) newErrors.senha = 'A senha deve ter pelo menos 6 caracteres';
 
     setErrors(newErrors);
@@ -38,12 +44,12 @@ export default function LoginScreen() {
     setLoginError(null);
 
     try {
-      const { accessToken } = await login({ email, password: senha });
-      setToken(accessToken);
+      const { accessToken, user } = await login({ login: cpf.trim(), password: senha });
+      setSession(accessToken, user);
       router.replace('/(app)/cadastrar-viagem');
     } catch (error: any) {
       if (error?.response?.status === 401) {
-        setLoginError('E-mail ou senha incorretos');
+        setLoginError('CPF ou senha incorretos');
       } else {
         setLoginError('Não foi possível conectar. Tente novamente.');
       }
@@ -59,7 +65,7 @@ export default function LoginScreen() {
     >
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="flex-grow">
         <SafeAreaView edges={['top']} className="bg-primary">
-          <View className="h-[120px] items-center justify-center">
+          <View className="h-[140px] items-center justify-center">
             <Image
               source={require('@/assets/images/logo.png')}
               className="w-40 h-40"
@@ -70,14 +76,13 @@ export default function LoginScreen() {
 
         <View className="flex-1 justify-center p-6">
           <Input
-            label="E-mail"
-            placeholder="seu@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={email}
-            onChangeText={handleEmailChange}
-            error={errors.email}
+            label="CPF"
+            placeholder="000.000.000-00"
+            keyboardType="numeric"
+            value={cpf}
+            onChangeText={handleCpfChange}
+            maxLength={14}
+            error={errors.cpf}
           />
 
           <Input

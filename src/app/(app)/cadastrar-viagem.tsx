@@ -24,7 +24,7 @@ const MARIZOPOLIS_ID = 4;
 
 export default function CadastrarViagemScreen() {
   const { data: pessoas, isLoading: isLoadingPessoas, isError: isErrorPessoas } = usePessoas();
-  const { data: me } = useMe();
+  const me = useMe();
   const { data: cidades, isLoading: isLoadingCidades, isError: isErrorCidades } = useCidades();
   const { data: veiculos, isLoading: isLoadingVeiculos, isError: isErrorVeiculos } = useVeiculos();
 

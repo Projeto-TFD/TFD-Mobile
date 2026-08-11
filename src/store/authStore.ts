@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import * as SecureStore from 'expo-secure-store';
+import type { Me } from '@/services/auth';
 
 const secureStorage = {
   getItem: (name: string) => SecureStore.getItemAsync(name),
@@ -12,7 +13,8 @@ type AuthState = {
   hasHydrated: boolean;
   setHasHydrated: (value: boolean) => void;
   token: string | null;
-  setToken: (token: string) => void;
+  user: Me | null;
+  setSession: (token: string, user: Me) => void;
   logout: () => void;
 };
 
@@ -22,8 +24,9 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
       token: null,
-      setToken: (token) => set({ token }),
-      logout: () => set({ token: null }),
+      user: null,
+      setSession: (token, user) => set({ token, user }),
+      logout: () => set({ token: null, user: null }),
     }),
     {
       name: 'tfd-auth-storage',
