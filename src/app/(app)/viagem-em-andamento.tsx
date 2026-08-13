@@ -62,7 +62,12 @@ export default function ViagemEmAndamentoScreen() {
         <Text className="text-sm font-semibold text-slate-800 mb-2">Dados da viagem</Text>
         <View className="border border-slate-200 rounded-xl p-4 mb-6">
           <View className="flex-row justify-between mb-1">
-            <Text className="text-primary text-sm">Cidade</Text>
+            <Text className="text-primary text-sm">Origem</Text>
+            <Text className="text-primary text-sm font-semibold">{trip.cidadeOrigem || '-'}</Text>
+          </View>
+
+          <View className="flex-row justify-between mb-1">
+            <Text className="text-primary text-sm">Destino</Text>
             <Text className="text-primary text-sm font-semibold">{trip.cidadeDestino || '-'}</Text>
           </View>
 

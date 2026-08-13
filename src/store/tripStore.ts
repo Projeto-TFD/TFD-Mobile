@@ -12,8 +12,10 @@ export type Passageiro = {
 
 type TripData = {
   viagemId: number;
+  cidadeOrigem: string;
   cidadeDestino: string;
   cidadeDestinoId: number;
+  dataSaida: string;
   observacao: string;
   veiculoId?: string;
   passageiros: Passageiro[];

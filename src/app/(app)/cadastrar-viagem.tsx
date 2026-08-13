@@ -20,14 +20,13 @@ type Passageiro = {
   acompanhanteNome?: string;
 };
 
-const MARIZOPOLIS_ID = 4;
-
 export default function CadastrarViagemScreen() {
   const { data: pessoas, isLoading: isLoadingPessoas, isError: isErrorPessoas } = usePessoas();
   const me = useMe();
   const { data: cidades, isLoading: isLoadingCidades, isError: isErrorCidades } = useCidades();
   const { data: veiculos, isLoading: isLoadingVeiculos, isError: isErrorVeiculos } = useVeiculos();
 
+  const [cidadeOrigemId, setCidadeOrigemId] = useState<string>();
   const [cidadeDestinoId, setCidadeDestinoId] = useState<string>();
   const [observacao, setObservacao] = useState('');
   const [veiculoId, setVeiculoId] = useState<string>();
@@ -46,9 +45,14 @@ export default function CadastrarViagemScreen() {
     label: `${v.nome} · ${v.placa} · ${v.ano} · ${v.renavam}`,
   }));
 
-  const cidadeOptions = (cidades ?? [])
-    .filter((c) => c.id !== MARIZOPOLIS_ID)
-    .map((c) => ({ value: String(c.id), label: `${c.nome} - ${c.uf}` }));
+  const todasCidades = (cidades ?? []).map((c) => ({
+    value: String(c.id),
+    label: `${c.nome} - ${c.uf}`,
+  }));
+
+  // impede escolher a mesma cidade como origem e destino ao mesmo tempo
+  const cidadeOrigemOptions = todasCidades.filter((c) => c.value !== cidadeDestinoId);
+  const cidadeDestinoOptions = todasCidades.filter((c) => c.value !== cidadeOrigemId);
 
   const idsJaUsados = passageiros.flatMap((p) =>
     [p.pacienteId, p.acompanhanteId].filter(Boolean)
@@ -92,8 +96,8 @@ export default function CadastrarViagemScreen() {
       setSubmitError('Usuário logado não está vinculado a um motorista.');
       return;
     }
-    if (!veiculoId || !cidadeDestinoId) {
-      setSubmitError('Preencha veículo e cidade destino antes de iniciar.');
+    if (!veiculoId || !cidadeOrigemId || !cidadeDestinoId) {
+      setSubmitError('Preencha veículo, cidade origem e cidade destino antes de iniciar.');
       return;
     }
     if (passageiros.length === 0) {
@@ -119,22 +123,26 @@ export default function CadastrarViagemScreen() {
     try {
       const viagem = await criarViagem({
         veiculoId: Number(veiculoId),
+        cidadeOrigemId: Number(cidadeOrigemId),
         cidadeDestinoId: Number(cidadeDestinoId),
         dataSaida,
         observacao: observacao || undefined,
         pessoas: pessoasPayload,
       });
 
-      const cidade = cidades?.find((c) => String(c.id) === cidadeDestinoId);
+  const origem = cidades?.find((c) => String(c.id) === cidadeOrigemId);
+  const destino = cidades?.find((c) => String(c.id) === cidadeDestinoId);
 
-      startTrip({
-        viagemId: viagem.id,
-        cidadeDestino: cidade ? `${cidade.nome} - ${cidade.uf}` : '',
-        cidadeDestinoId: Number(cidadeDestinoId),
-        observacao,
-        veiculoId,
-        passageiros,
-      });
+  startTrip({
+    viagemId: viagem.id,
+    cidadeOrigem: origem ? `${origem.nome} - ${origem.uf}` : '',
+    cidadeDestino: destino ? `${destino.nome} - ${destino.uf}` : '',
+    cidadeDestinoId: Number(cidadeDestinoId),
+    dataSaida,
+    observacao,
+    veiculoId,
+    passageiros,
+  });
 
       router.replace('/(app)/viagem-em-andamento');
 } catch (error: any) {
@@ -178,13 +186,23 @@ export default function CadastrarViagemScreen() {
           ) : isErrorCidades ? (
             <Text className="text-danger text-sm">Não foi possível carregar as cidades.</Text>
           ) : (
-            <Select
-              label="Cidade destino"
-              placeholder="Selecione a cidade"
-              options={cidadeOptions}
-              value={cidadeDestinoId}
-              onChange={setCidadeDestinoId}
-            />
+            <>
+              <Select
+                label="Cidade origem"
+                placeholder="Selecione a cidade de origem"
+                options={cidadeOrigemOptions}
+                value={cidadeOrigemId}
+                onChange={setCidadeOrigemId}
+              />
+
+              <Select
+                label="Cidade destino"
+                placeholder="Selecione a cidade destino"
+                options={cidadeDestinoOptions}
+                value={cidadeDestinoId}
+                onChange={setCidadeDestinoId}
+              />
+            </>
           )}
 
           <Text className="text-sm font-semibold text-slate-800 mb-1.5 mt-4">Observação:</Text>

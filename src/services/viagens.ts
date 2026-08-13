@@ -2,9 +2,9 @@ import { api } from '@/lib/api';
 
 export type CriarViagemPayload = {
   veiculoId: number;
+  cidadeOrigemId: number;
   cidadeDestinoId: number;
   dataSaida: string;
-  dataEntrada?: string;
   observacao?: string;
   pessoas: {
     pessoaId: number;
@@ -15,6 +15,8 @@ export type CriarViagemPayload = {
 export type Viagem = {
   id: number;
   veiculoId: number;
+  motoristaId: number;
+  cidadeOrigemId: number;
   cidadeDestinoId: number;
   dataSaida: string;
   dataEntrada: string | null;
